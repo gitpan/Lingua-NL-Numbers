@@ -1,6 +1,6 @@
 package Lingua::NL::Numbers;
 
-$VERSION = '1.1';
+$VERSION = '1.2';
 
 use strict;
 
@@ -230,7 +230,7 @@ sub _formatLarge
 
 =head1 NAME
 
-Lingua::NL::Numbers - Perl module for converting numeric values into their Afrikaans equivalents
+Lingua::NL::Numbers - Perl module for converting numeric values into their Dutch equivalents
 
     
 =head1 DESCRIPTION
