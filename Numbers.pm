@@ -1,10 +1,11 @@
 package Lingua::NL::Numbers;
 
-$VERSION = '1.0';
+$VERSION = '1.1';
 
 use strict;
 
 my $numbers = {
+	0	=>	'nul',
 	1	=>	'een',
 	2	=>	'twee',
 	3	=>	'drie',
@@ -18,7 +19,7 @@ my $numbers = {
 	11	=>	'elf',
 	12	=>	'twaalf',
 	13	=>	'dertien',
-	14	=>	'viertien',
+	14	=>	'veertien',
 	15	=>	'vijftien',
 	16	=>	'zestien',
 	17	=>	'zeventien',
@@ -26,8 +27,8 @@ my $numbers = {
 	19	=>	'negentien',
 	20	=>	'twintig',
 	30	=>	'dertig',
-	40	=>	'viertig',
-	50	=>	'vifftig',
+	40	=>	'veertig',
+	50	=>	'vijftig',
 	60	=>	'zestig',
 	70	=>	'zeventig',
 	80	=>	'tachtig',
@@ -72,54 +73,60 @@ sub parse
 			unshift @{$ret_array}, "$temp biljoen";
 		}
 		elsif( defined($digits->[9]) && ($digits->[9] != 0) ) {
-			unshift @{$ret_array}, $self->_formatLarge( $digits->[9], 'biljoen' );
+			unshift @{$ret_array}, $self->_formatLarge( $digits->[9], ' biljoen' );
 		};
 
 		# hundreds of millions
 		if( defined($digits->[8]) && ($digits->[8] != 0) ) {
 			if( ($digits->[7] == 0) && ($digits->[6] == 0) ) {
-				unshift @{$ret_array}, $self->_formatLarge( $digits->[8], 'honderd miljoen' );
+				unshift @{$ret_array}, $self->_formatLarge( $digits->[8], ' honderd miljard' );
 			}
 			else {
-				unshift @{$ret_array}, $self->_formatLarge( $digits->[8], 'honderd' );
+				unshift @{$ret_array}, $self->_formatLarge( $digits->[8], ' honderd' );
 			};
 		};
 
 		# tens of millions
 		if( defined($digits->[7]) && ($digits->[7] != 0) ) {
 			my $temp = $self->_formatTens( $digits->[6], $digits->[7] );
-			unshift @{$ret_array}, "$temp miljoen";
+			unshift @{$ret_array}, "$temp miljard";
 		}
 		elsif( defined($digits->[6]) && ($digits->[6] != 0) ) {
-			unshift @{$ret_array}, $self->_formatLarge( $digits->[6], 'miljoen' );
+			unshift @{$ret_array}, $self->_formatLarge( $digits->[6], ' miljard' );
 		};
 
 		# hundreds of thousands
 		if( defined($digits->[5]) && ($digits->[5] != 0) ) {
 			if( ($digits->[4] == 0) && ($digits->[3] == 0) ) {
-				unshift @{$ret_array}, $self->_formatLarge( $digits->[5], 'honderd duisend' );
+				unshift @{$ret_array}, $self->_formatLarge( $digits->[5], ' honderd duizend' );
 			}
 			else {
-				unshift @{$ret_array}, $self->_formatLarge( $digits->[5], 'honderd' );
+				unshift @{$ret_array}, $self->_formatLarge( $digits->[5], ' honderd' );
 			};
 		};
 
 		# tens of thousands
 		if( defined($digits->[4]) && ($digits->[4] != 0) ) {
 			my $temp = $self->_formatTens( $digits->[3], $digits->[4] );
-			unshift @{$ret_array}, "$temp duisend";
+			unshift @{$ret_array}, "$temp duizend";
+		}
+		elsif( defined($digits->[3]) && ($digits->[3] == 1) ) {
+			unshift @{$ret_array}, ' duizend';
 		}
 		elsif( defined($digits->[3]) && ($digits->[3] != 0) ) {
-			unshift @{$ret_array}, $self->_formatLarge( $digits->[3], 'duisend' );
+			unshift @{$ret_array}, $self->_formatLarge( $digits->[3], ' duizend' );
 		};
 
 		# hundreds
-		if( defined($digits->[2]) && ($digits->[2] != 0) ) {
+		if( defined($digits->[2]) && ($digits->[2] == 1) ) {
+			unshift @{$ret_array}, 'honderd';
+		}
+		elsif( defined($digits->[2]) && ($digits->[2] != 0) ) {
 			unshift @{$ret_array}, $self->_formatLarge( $digits->[2], 'honderd' );
 		};
 
 		# tens
-		unshift @{$ret_array}, $self->_formatTens( $digits->[0], $digits->[1] );
+		unshift @{$ret_array}, $self->_formatTens( $digits->[0], $digits->[1], 'en' );
 
 		$ret = $self->_sortReturn( $ret_array, $digits );
 
@@ -147,16 +154,15 @@ sub _sortReturn
 		$large_nums = 1;
 	};
 
-	my $multiple = 0;
-
 	for( my $i = $size; $i > 0; $i-- ) {
 
 		if( defined($ret_array->[$i]) ) {
-			if( $multiple ) {
-				$ret .= ', ';
+			if( $ret_array->[$i] =~ /(miljard|duizend)/ ) {
+				$ret .= $ret_array->[$i] .', ';
+			}
+			else {
+				$ret .= $ret_array->[$i] .' ';
 			};
-			$ret .= $ret_array->[$i];
-			$multiple = 1;
 		};
 	};
 
@@ -170,7 +176,7 @@ sub _sortReturn
 		$ret .= $ret_array->[0];
 	}
 	else {
-		$ret .= ', '. $ret_array->[0];
+		$ret .= ' '. $ret_array->[0];
 	};
 
 	$ret =~ s/(^ |\s{2,}| $)/ /g;
@@ -184,6 +190,7 @@ sub _formatTens
 	my $self = shift;
 	my $units = shift;
 	my $tens = shift;
+	my $en = shift || ' en ';
 
 	# Both digits are zero
 	unless( $units || $tens ) {
@@ -199,7 +206,7 @@ sub _formatTens
 	};
 
 	my $temp = $tens . 0;
-	return( "$numbers->{$units} en $numbers->{$temp}" );
+	return( $numbers->{$units} . $en . $numbers->{$temp} );
 };
 
 
@@ -209,7 +216,7 @@ sub _formatLarge
 	my $digit = shift;
 	my $word = shift;
 
-	my $ret = "$numbers->{$digit} $word";
+	my $ret = "$numbers->{$digit}$word";
 
 	return( $ret );
 };
